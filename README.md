@@ -2,8 +2,10 @@
 # Mega Sumo Robot v1 with ESP32 and VL53L0X
 
 ## Overview
+This repository contains the C++ source code and hardware documentation for my Version 1 Mega Sumo Robot. This robot competed in the Mega Sumo category and proudly secured 3rd Place!
 
-This is the version 1 Mega Sumo robot, designed and built for Sumo robotics competitions.
+Weighing in at 1.4 kg, it is built for raw power and smart tracking, capable of pushing opponents up to 1.9 kg off the dohyo. It uses a combination of Time-of-Flight (ToF) sensors for precise opponent tracking and IR sensors for aggressive line survival.
+
 - **Awards:** 3rd place in a mega sumo robots competition!
 - **Sensors:** Three VL53L0X distance sensors (front, left, right), three QRE1113IR line sensors (bottom).
 - **Motors:** Two JGA-25 DC motors, driven by an MC33886 dual motor driver.
@@ -21,19 +23,18 @@ This is the version 1 Mega Sumo robot, designed and built for Sumo robotics comp
 - [Electrical Schematic](#electrical-schematic)
 - [Assembly Instructions](#assembly-instructions)
 - [Code](#code)
-- [How it Works](#how-it-works)
-- [Competition Results](#competition-results)
-- [License](#license)
-
+- [Software Logic & Strategy](#Software-Logic-&-Strategy) 
 ---
 
 ## Photos
 
 > **Add photos here!**
 >
-> - ![Robot front view](docs/images/robot_front.jpg)
-> - ![Sensor placement](docs/images/sensors.jpg)
-> - ![Sumo in competition](docs/images/in_competition.jpg)
+> - <img src="ASSETS/22.jpg" width="350" alt="---">
+
+> - <img src="ASSETS/11.jpg" width="300" alt="---">
+
+> - <img src="ASSETS/55.jpg" width="300" alt="---">
 
 ---
 
@@ -82,13 +83,15 @@ This is the version 1 Mega Sumo robot, designed and built for Sumo robotics comp
 
 ## Electrical Schematic
 
-> **Add schematic here!**
->
-> - [ ] Draw circuit schematic showing ESP32, sensors, motors, motor driver, and all connections.
+
 
 ---
 
 ## Assembly Instructions
+
+
+> - <img src="ASSETS/33.jpg" width="300" alt="---">
+
 
 1. Mount the ESP32 on the chassis.
 2. Attach the three VL53L0X sensors: one in the center, and two at each front corner.
@@ -100,11 +103,13 @@ This is the version 1 Mega Sumo robot, designed and built for Sumo robotics comp
 
 ---
 
+> - <img src="ASSETS/44.jpg" width="300" alt="---">
+
 ## Code
 
-> **Place your latest code in [main.ino](src/main.ino) or in `src/` directory.**
+> [FIRMAWRE](src/main_V3.cpp) 
 >
-> **Below is your current main sketch (summarized for reference):**
+
 
 ```cpp name=src/main.ino
 #include <Wire.h>
@@ -133,45 +138,29 @@ const int LINE_RIGHT  = 25;
 
 // ... (remaining code for logic, motor, and sensor control)
 ```
-> [Full code available in `src/main.ino`](src/main.ino)
+> [Full code available in `src/FIRMWARE`](src/main_V3.cpp)
 
 ---
 
-## How it Works
+## Software Logic & Strategy
 
-### Sensing
-- **Front Distance Sensing:** 3x VL53L0X sensors detect opponent's position.
-- **Line Avoidance:** 3x QRE1113IR sensors avoid going out of bounds (detect white line).
+The code is written in **C++** using the Arduino IDE. It features several advanced control strategies to keep the robot alive and aggressive.
 
-### Behavior Logic
-- If a line is detected by any bottom sensor, the robot instantly reverses and turns away.
-- If an opponent is detected in the center, goes forward at full power; if detected left/right, spins, then attacks.
-- If no opponent detected: the robot "wobbles" and sweeps to search for targets.
+### 1. Distance Filtering (EMA)
+Raw Time-of-Flight data can be noisy in a brightly lit competition ring. The code implements an **Exponential Moving Average (EMA)** filter (`ema_alpha = 0.8`) to smooth out the distance readings from the VL53L0X sensors, preventing false attacks.
 
-### Motors and Movement
-- Dual JGA-25 motors for left/right drive.
-- All movements (forward, spin, wobble, reverse) handled in code for best attack and defense!
+* **Attack Threshold:** `800 mm` (Center lock-on)
+* **Side Threshold:** `570 mm` (Peripheral detection)
 
----
+### 2. Search Pattern ("Micro Wobble")
+When no opponent is detected, the robot enters a **"Micro Wobble"** phase. It drives forward but slightly alternates speed between the left and right motors every `300ms`. This creates a zig-zag sweeping motion, expanding the field of view of the front lasers without losing forward momentum. If nothing is found for `1.8 seconds`, it executes a hard rotational sweep.
 
-## Competition Results
+### 3. Edge Survival (Line Detection)
+The edge detection routine interrupts all other actions immediately. It evaluates 6 distinct scenarios based on which sensors hit the white line:
 
-- **Event:** [Event Name / Date Here]
-- **Result:** 3rd Place — Successfully pushed robots up to 1.9 kg!
+* **All Sensors / Center Only:** Hard reverse, then spin right.
+* **Left Only:** Reverse and spin right to face inward.
+* **Right Only:** Reverse and spin left to face inward.
 
 ---
 
-## License
-
-> Specify your license here (e.g., MIT, GPL, etc.)
-
----
-
-## Credits
-
-- Built by @0xNaviMetal
-- [Any collaborators, thanks, etc.]
-
----
-
-> For any issues, open an [issue](https://github.com/0xNaviMetal/ESP32-Mega-Sumo-VL53L0X/issues).
